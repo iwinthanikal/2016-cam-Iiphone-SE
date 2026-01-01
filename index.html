@@ -1,79 +1,118 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>2016 Camera 🍎</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>iPhone SE (2016)</title>
 
 <style>
-:root {
-  --bg: #f5f5f7;
-  --card: #ffffff;
-  --text: #1d1d1f;
-  --btn: #007aff;
+:root{
+  --bg:#f2f2f7;
+  --card:#ffffff;
+  --text:#1c1c1e;
+  --sub:#8e8e93;
+  --accent:#007aff;
 }
 
-body.dark {
-  --bg: #000000;
-  --card: #1c1c1e;
-  --text: #ffffff;
-  --btn: #0a84ff;
+body.dark{
+  --bg:#000;
+  --card:#1c1c1e;
+  --text:#fff;
+  --sub:#8e8e93;
 }
 
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--text);
-  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
-  display: flex;
-  justify-content: center;
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  background:var(--bg);
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display",sans-serif;
+  display:flex;
+  justify-content:center;
 }
 
-.app {
-  max-width: 390px;
-  width: 100%;
-  padding: 16px;
+.app{
+  width:100%;
+  max-width:390px;
+  padding:16px;
 }
 
-.card {
-  background: var(--card);
-  border-radius: 20px;
-  padding: 16px;
-  box-shadow: 0 12px 30px rgba(0,0,0,.15);
+.card{
+  background:var(--card);
+  border-radius:22px;
+  padding:16px;
+  box-shadow:0 20px 40px rgba(0,0,0,.15);
 }
 
-h1 {
-  text-align: center;
-  font-size: 20px;
+h1{
+  text-align:center;
+  font-size:18px;
+  margin:4px 0 12px;
 }
 
-canvas {
-  width: 100%;
-  border-radius: 14px;
-  background: #333;
-  margin-top: 10px;
+canvas{
+  width:100%;
+  border-radius:16px;
+  background:#d1d1d6;
 }
 
-.controls {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-top: 14px;
+.section{
+  margin-top:14px;
 }
 
-button, select {
-  padding: 12px;
-  border-radius: 14px;
-  border: none;
-  background: var(--btn);
-  color: white;
-  font-size: 14px;
+button{
+  width:100%;
+  padding:13px;
+  border-radius:14px;
+  border:none;
+  font-size:15px;
+  font-weight:500;
+  background:var(--accent);
+  color:white;
 }
 
-.toggle {
-  background: none;
-  color: var(--text);
-  border: 1px solid #888;
+.secondary{
+  background:#e5e5ea;
+  color:#000;
+}
+
+body.dark .secondary{
+  background:#2c2c2e;
+  color:#fff;
+}
+
+input[type=file]{
+  display:none;
+}
+
+.file-label{
+  display:block;
+  padding:13px;
+  border-radius:14px;
+  text-align:center;
+  background:#e5e5ea;
+  color:#000;
+}
+
+body.dark .file-label{
+  background:#2c2c2e;
+  color:#fff;
+}
+
+label{
+  font-size:13px;
+  color:var(--sub);
+}
+
+input[type=range]{
+  width:100%;
+}
+
+.footer{
+  margin-top:10px;
+  text-align:center;
+  font-size:12px;
+  color:var(--sub);
 }
 </style>
 </head>
@@ -81,27 +120,39 @@ button, select {
 <body>
 <div class="app">
   <div class="card">
-    <h1>📸 2016 Camera</h1>
+    <h1>📸 iPhone SE (2016)</h1>
 
     <canvas id="canvas"></canvas>
 
-    <div class="controls">
-      <button onclick="openCamera()">🎞 Take Photo</button>
-      <input type="file" accept="image/*" id="upload">
-
-      <select id="preset">
-        <option value="a4">VSCO A4</option>
-        <option value="f2">VSCO F2</option>
-        <option value="c1">VSCO C1</option>
-        <option value="la">LA Vibes 🌴</option>
-        <option value="party">Party Flash 🎉</option>
-        <option value="sunset">Sunset 🌅</option>
-      </select>
-
-      <button onclick="apply2016()">✨ Apply Look</button>
-      <button onclick="save()">📲 Save</button>
-      <button class="toggle" onclick="toggleTheme()">🌗 Light / Dark</button>
+    <div class="section">
+      <button onclick="openCamera()">Take Photo</button>
     </div>
+
+    <div class="section">
+      <label class="file-label">
+        Choose Photo
+        <input type="file" accept="image/*" id="upload">
+      </label>
+    </div>
+
+    <div class="section">
+      <label>Strength</label>
+      <input type="range" min="0" max="100" value="60" id="strength">
+    </div>
+
+    <div class="section">
+      <button onclick="applyLook()">Apply Look</button>
+    </div>
+
+    <div class="section">
+      <button class="secondary" onclick="save()">Save</button>
+    </div>
+
+    <div class="section">
+      <button class="secondary" onclick="toggleTheme()">Light / Dark</button>
+    </div>
+
+    <div class="footer">2014–2016 matte camera look</div>
   </div>
 </div>
 
@@ -109,25 +160,28 @@ button, select {
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 const upload = document.getElementById("upload");
-const preset = document.getElementById("preset");
+const strengthEl = document.getElementById("strength");
 
-let img = new Image();
+let originalImage = null;
 
 // upload
-upload.onchange = e => {
+upload.onchange = e=>{
   const r = new FileReader();
-  r.onload = () => img.src = r.result;
+  r.onload = ()=>{
+    const img = new Image();
+    img.onload = ()=>{
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx.drawImage(img,0,0);
+      originalImage = img;
+    };
+    img.src = r.result;
+  };
   r.readAsDataURL(e.target.files[0]);
 };
 
-img.onload = () => {
-  canvas.width = img.width;
-  canvas.height = img.height;
-  ctx.drawImage(img,0,0);
-};
-
 // camera
-function openCamera() {
+function openCamera(){
   navigator.mediaDevices.getUserMedia({video:true}).then(stream=>{
     const v=document.createElement("video");
     v.srcObject=stream;
@@ -136,80 +190,71 @@ function openCamera() {
       canvas.width=v.videoWidth;
       canvas.height=v.videoHeight;
       ctx.drawImage(v,0,0);
+      originalImage = canvasToImage();
       stream.getTracks().forEach(t=>t.stop());
     },800);
   });
 }
 
-// main filter
-function apply2016() {
+// main logic — NO stacking
+function applyLook(){
+  if(!originalImage) return;
+
+  const s = strengthEl.value / 100;
+
   ctx.filter="none";
-  ctx.drawImage(img||canvas,0,0);
+  ctx.drawImage(originalImage,0,0);
 
-  if(preset.value==="a4") baseFade(0.15,0.12);
-  if(preset.value==="f2") warmSunset();
-  if(preset.value==="c1") coolLA();
-  if(preset.value==="la") coolLA(true);
-  if(preset.value==="party") partyFlash();
-  if(preset.value==="sunset") warmSunset(true);
-
-  instagram2016Compression();
-}
-
-// helpers
-function baseFade(sat,con){
-  ctx.filter=`saturate(${1-sat}) contrast(${1-con}) brightness(1.02)`;
+  // base fade
+  ctx.filter=`
+    brightness(${1 + 0.02*s})
+    contrast(${1 - 0.15*s})
+    saturate(${1 - 0.18*s})
+  `;
   ctx.drawImage(canvas,0,0);
-  liftBlacks();
+
+  liftBlacks(s);
+  splitTone(s);
 }
 
-function liftBlacks(){
+function liftBlacks(s){
   const d=ctx.getImageData(0,0,canvas.width,canvas.height);
   for(let i=0;i<d.data.length;i+=4){
-    d.data[i]+=12; d.data[i+1]+=12; d.data[i+2]+=12;
+    const lift=12*s;
+    d.data[i]+=lift;
+    d.data[i+1]+=lift;
+    d.data[i+2]+=lift;
   }
   ctx.putImageData(d,0,0);
 }
 
-function warmSunset(extra=false){
-  baseFade(0.1,0.08);
+function splitTone(s){
   const d=ctx.getImageData(0,0,canvas.width,canvas.height);
   for(let i=0;i<d.data.length;i+=4){
-    d.data[i]+=extra?12:6;
-    d.data[i+1]+=4;
+    const avg=(d.data[i]+d.data[i+1]+d.data[i+2])/3;
+    if(avg>140){
+      d.data[i]+=6*s;
+      d.data[i+1]+=4*s;
+    }else{
+      d.data[i+2]+=6*s;
+    }
   }
   ctx.putImageData(d,0,0);
 }
 
-function coolLA(extra=false){
-  baseFade(0.12,0.1);
-  const d=ctx.getImageData(0,0,canvas.width,canvas.height);
-  for(let i=0;i<d.data.length;i+=4){
-    d.data[i+2]+=extra?12:6;
-  }
-  ctx.putImageData(d,0,0);
+function canvasToImage(){
+  const img=new Image();
+  img.src=canvas.toDataURL();
+  return img;
 }
 
-function partyFlash(){
-  ctx.filter="contrast(1.1) brightness(1.08)";
-  ctx.drawImage(canvas,0,0);
-}
-
-// instagram 2016 export feel
-function instagram2016Compression(){
-  const imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
-  ctx.putImageData(imgData,0,0);
-}
-
-// save
 function save(){
   const a=document.createElement("a");
-  a.download="2016-photo.jpg";
-  a.href=canvas.toDataURL("image/jpeg",0.88);
+  a.download="iphone-se-2016.jpg";
+  a.href=canvas.toDataURL("image/jpeg",0.9);
   a.click();
 }
 
-// theme
 function toggleTheme(){
   document.body.classList.toggle("dark");
 }
