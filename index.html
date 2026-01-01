@@ -3,13 +3,28 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>iPhone SE 2016 Camera 🍎</title>
+<title>2016 Camera 🍎</title>
 
 <style>
+:root {
+  --bg: #f5f5f7;
+  --card: #ffffff;
+  --text: #1d1d1f;
+  --btn: #007aff;
+}
+
+body.dark {
+  --bg: #000000;
+  --card: #1c1c1e;
+  --text: #ffffff;
+  --btn: #0a84ff;
+}
+
 body {
   margin: 0;
+  background: var(--bg);
+  color: var(--text);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
-  background: #f5f5f7;
   display: flex;
   justify-content: center;
 }
@@ -21,23 +36,22 @@ body {
 }
 
 .card {
-  background: #ffffff;
+  background: var(--card);
   border-radius: 20px;
   padding: 16px;
-  box-shadow: 0 12px 30px rgba(0,0,0,.08);
+  box-shadow: 0 12px 30px rgba(0,0,0,.15);
 }
 
 h1 {
   text-align: center;
   font-size: 20px;
-  margin-bottom: 10px;
 }
 
 canvas {
   width: 100%;
   border-radius: 14px;
-  margin-top: 12px;
-  background: #e5e5ea;
+  background: #333;
+  margin-top: 10px;
 }
 
 .controls {
@@ -47,23 +61,19 @@ canvas {
   margin-top: 14px;
 }
 
-button, input[type="file"] {
+button, select {
   padding: 12px;
   border-radius: 14px;
   border: none;
-  background: #007aff;
+  background: var(--btn);
   color: white;
   font-size: 14px;
-  font-weight: 500;
 }
 
-input[type="range"] {
-  width: 100%;
-}
-
-label {
-  font-size: 12px;
-  opacity: 0.7;
+.toggle {
+  background: none;
+  color: var(--text);
+  border: 1px solid #888;
 }
 </style>
 </head>
@@ -71,7 +81,7 @@ label {
 <body>
 <div class="app">
   <div class="card">
-    <h1>📸 iPhone SE (2016)</h1>
+    <h1>📸 2016 Camera</h1>
 
     <canvas id="canvas"></canvas>
 
@@ -79,11 +89,18 @@ label {
       <button onclick="openCamera()">🎞 Take Photo</button>
       <input type="file" accept="image/*" id="upload">
 
-      <label>🎚 Strength</label>
-      <input type="range" min="0" max="100" value="70" id="strength">
+      <select id="preset">
+        <option value="a4">VSCO A4</option>
+        <option value="f2">VSCO F2</option>
+        <option value="c1">VSCO C1</option>
+        <option value="la">LA Vibes 🌴</option>
+        <option value="party">Party Flash 🎉</option>
+        <option value="sunset">Sunset 🌅</option>
+      </select>
 
-      <button onclick="applyiPhone2016()">✨ Apply Look</button>
-      <button onclick="savePhoto()">📲 Save</button>
+      <button onclick="apply2016()">✨ Apply Look</button>
+      <button onclick="save()">📲 Save</button>
+      <button class="toggle" onclick="toggleTheme()">🌗 Light / Dark</button>
     </div>
   </div>
 </div>
@@ -92,100 +109,109 @@ label {
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 const upload = document.getElementById("upload");
-const strength = document.getElementById("strength");
+const preset = document.getElementById("preset");
 
 let img = new Image();
 
-// Upload
+// upload
 upload.onchange = e => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = () => img.src = reader.result;
-  reader.readAsDataURL(file);
+  const r = new FileReader();
+  r.onload = () => img.src = r.result;
+  r.readAsDataURL(e.target.files[0]);
 };
 
-// Draw image
 img.onload = () => {
   canvas.width = img.width;
   canvas.height = img.height;
-  ctx.filter = "none";
-  ctx.drawImage(img, 0, 0);
+  ctx.drawImage(img,0,0);
 };
 
-// Camera capture
+// camera
 function openCamera() {
-  navigator.mediaDevices.getUserMedia({ video: true })
-    .then(stream => {
-      const video = document.createElement("video");
-      video.srcObject = stream;
-      video.play();
-      setTimeout(() => {
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        ctx.drawImage(video, 0, 0);
-        stream.getTracks().forEach(t => t.stop());
-      }, 800);
-    });
+  navigator.mediaDevices.getUserMedia({video:true}).then(stream=>{
+    const v=document.createElement("video");
+    v.srcObject=stream;
+    v.play();
+    setTimeout(()=>{
+      canvas.width=v.videoWidth;
+      canvas.height=v.videoHeight;
+      ctx.drawImage(v,0,0);
+      stream.getTracks().forEach(t=>t.stop());
+    },800);
+  });
 }
 
-// REAL iPhone SE / 6s tuning
-function applyiPhone2016() {
-  const i = strength.value / 100;
+// main filter
+function apply2016() {
+  ctx.filter="none";
+  ctx.drawImage(img||canvas,0,0);
 
-  // Reset
-  ctx.setTransform(1,0,0,1,0,0);
-  ctx.filter = "none";
-  ctx.drawImage(img || canvas, 0, 0);
+  if(preset.value==="a4") baseFade(0.15,0.12);
+  if(preset.value==="f2") warmSunset();
+  if(preset.value==="c1") coolLA();
+  if(preset.value==="la") coolLA(true);
+  if(preset.value==="party") partyFlash();
+  if(preset.value==="sunset") warmSunset(true);
 
-  // Tone & color (subtle)
-  ctx.filter = `
-    brightness(${1 + 0.03 * i})
-    contrast(${1 + 0.08 * i})
-    saturate(${1 + 0.06 * i})
-    sepia(${0.02 * i})
-  `;
-  ctx.drawImage(canvas, 0, 0);
-
-  subtleSharpen();
+  instagram2016Compression();
 }
 
-// iPhone-style sharpening (NO grain)
-function subtleSharpen() {
-  const w = canvas.width;
-  const h = canvas.height;
-  const src = ctx.getImageData(0, 0, w, h);
-  const dst = ctx.createImageData(w, h);
+// helpers
+function baseFade(sat,con){
+  ctx.filter=`saturate(${1-sat}) contrast(${1-con}) brightness(1.02)`;
+  ctx.drawImage(canvas,0,0);
+  liftBlacks();
+}
 
-  const k = [0,-1,0,-1,5,-1,0,-1,0];
-
-  for (let y = 1; y < h - 1; y++) {
-    for (let x = 1; x < w - 1; x++) {
-      for (let c = 0; c < 3; c++) {
-        let idx = (y * w + x) * 4 + c;
-        let sum = 0;
-        let ki = 0;
-
-        for (let ky = -1; ky <= 1; ky++) {
-          for (let kx = -1; kx <= 1; kx++) {
-            let ii = ((y + ky) * w + (x + kx)) * 4 + c;
-            sum += src.data[ii] * k[ki++];
-          }
-        }
-        dst.data[idx] = Math.min(255, Math.max(0, sum));
-      }
-      dst.data[(y * w + x) * 4 + 3] = 255;
-    }
+function liftBlacks(){
+  const d=ctx.getImageData(0,0,canvas.width,canvas.height);
+  for(let i=0;i<d.data.length;i+=4){
+    d.data[i]+=12; d.data[i+1]+=12; d.data[i+2]+=12;
   }
-  ctx.putImageData(dst, 0, 0);
+  ctx.putImageData(d,0,0);
 }
 
-// Save
-function savePhoto() {
-  const a = document.createElement("a");
-  a.download = "iphone-se-2016.jpg";
-  a.href = canvas.toDataURL("image/jpeg", 0.95);
+function warmSunset(extra=false){
+  baseFade(0.1,0.08);
+  const d=ctx.getImageData(0,0,canvas.width,canvas.height);
+  for(let i=0;i<d.data.length;i+=4){
+    d.data[i]+=extra?12:6;
+    d.data[i+1]+=4;
+  }
+  ctx.putImageData(d,0,0);
+}
+
+function coolLA(extra=false){
+  baseFade(0.12,0.1);
+  const d=ctx.getImageData(0,0,canvas.width,canvas.height);
+  for(let i=0;i<d.data.length;i+=4){
+    d.data[i+2]+=extra?12:6;
+  }
+  ctx.putImageData(d,0,0);
+}
+
+function partyFlash(){
+  ctx.filter="contrast(1.1) brightness(1.08)";
+  ctx.drawImage(canvas,0,0);
+}
+
+// instagram 2016 export feel
+function instagram2016Compression(){
+  const imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
+  ctx.putImageData(imgData,0,0);
+}
+
+// save
+function save(){
+  const a=document.createElement("a");
+  a.download="2016-photo.jpg";
+  a.href=canvas.toDataURL("image/jpeg",0.88);
   a.click();
+}
+
+// theme
+function toggleTheme(){
+  document.body.classList.toggle("dark");
 }
 </script>
 </body>
